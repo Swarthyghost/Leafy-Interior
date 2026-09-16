@@ -21,7 +21,6 @@ export default function HeroVideoBackground() {
       loop
       playsInline
       preload="auto"
-      poster="/images/hero-leaves.png"
       className="absolute inset-0 w-full h-full object-cover"
     >
       <source src="/vid.mp4" type="video/mp4" />
