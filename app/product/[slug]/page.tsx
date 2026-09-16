@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import ProductDetail from "@/components/product/ProductDetail";
-import { getProductBySlug, getPotProducts } from "@/lib/products";
+import { getProductBySlug } from "@/lib/products";
 
 export default async function ProductPage({ params }: PageProps<"/product/[slug]">) {
   const { slug } = await params;
@@ -14,14 +14,5 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
 
   if (!product) notFound();
 
-  let pots: Awaited<ReturnType<typeof getPotProducts>> = [];
-  if (product.allowsPotAddon) {
-    try {
-      pots = await getPotProducts();
-    } catch {
-      pots = [];
-    }
-  }
-
-  return <ProductDetail product={product} pots={pots} />;
+  return <ProductDetail product={product} />;
 }

@@ -1,19 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
-import type { Product, ProductVariant, ColorOption, SizeOption } from "@/types";
+import { motion } from "framer-motion";
+import { useRef, useState } from "react";
+import type { Product, ProductVariant, PotColorOption } from "@/types";
 import { formatGHS } from "@/lib/format";
+import { discountPercent, effectivePrice, isDiscounted } from "@/lib/pricing";
 import { useCartStore } from "@/store/cart";
 import { useFlyToCartStore } from "@/store/flyToCart";
 
-export default function ProductDetail({ product, pots }: { product: Product; pots: Product[] }) {
+export default function ProductDetail({ product }: { product: Product }) {
   const [activeImage, setActiveImage] = useState(0);
   const [variant, setVariant] = useState<ProductVariant | undefined>(product.variants[0]);
   const [wantsPot, setWantsPot] = useState(false);
-  const [selectedPot, setSelectedPot] = useState<Product | null>(pots[0] ?? null);
-  const [color, setColor] = useState<ColorOption | undefined>(pots[0]?.colorOptions?.[0]);
-  const [size, setSize] = useState<SizeOption | undefined>(pots[0]?.sizeOptions?.[0]);
+  const [potColor, setPotColor] = useState<PotColorOption | undefined>(product.potColorOptions?.[0]);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
@@ -21,36 +21,26 @@ export default function ProductDetail({ product, pots }: { product: Product; pot
   const addItem = useCartStore((s) => s.addItem);
   const launch = useFlyToCartStore((s) => s.launch);
 
-  const potTotal = wantsPot && selectedPot ? selectedPot.basePrice + (size?.priceDelta ?? 0) : 0;
-  const unitPrice = product.basePrice + (variant?.priceDelta ?? 0) + potTotal;
+  const productOnSale = isDiscounted(product);
+  const productPct = discountPercent(product);
+  const potTotal = wantsPot && potColor ? potColor.priceDelta : 0;
+  const unitPrice = effectivePrice(product) + (variant?.priceDelta ?? 0) + potTotal;
   const total = unitPrice * quantity;
-
-  const potThumbnails = useMemo(() => pots.slice(0, 8), [pots]);
-
-  function selectPot(pot: Product) {
-    setSelectedPot(pot);
-    setColor(pot.colorOptions?.[0]);
-    setSize(pot.sizeOptions?.[0]);
-  }
 
   function handleAddToCart() {
     addItem({
       productId: product.id,
       name: product.name,
       image: product.images[activeImage] ?? product.images[0] ?? "",
-      basePrice: product.basePrice,
+      basePrice: effectivePrice(product),
       quantity,
       variant,
       pot:
-        wantsPot && selectedPot
+        wantsPot && potColor
           ? {
-              productId: selectedPot.id,
-              name: selectedPot.name,
-              image: selectedPot.images[0] ?? "",
-              colorName: color?.name,
-              colorHex: color?.hex,
-              sizeName: size?.name,
-              priceDelta: selectedPot.basePrice + (size?.priceDelta ?? 0),
+              colorName: potColor.name,
+              colorHex: potColor.hex,
+              priceDelta: potColor.priceDelta,
             }
           : undefined,
     });
@@ -65,7 +55,11 @@ export default function ProductDetail({ product, pots }: { product: Product; pot
 
   return (
     <div className="max-w-[1200px] mx-auto w-full px-6 md:px-10 py-14 grid grid-cols-1 md:grid-cols-2 gap-10">
-      <div>
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      >
         <div ref={imgRef} className="aspect-square rounded-[22px] overflow-hidden bg-[#233318] relative mb-3">
           {product.images[activeImage] && (
             <Image src={product.images[activeImage]} alt={product.name} fill className="object-cover" />
@@ -86,12 +80,37 @@ export default function ProductDetail({ product, pots }: { product: Product; pot
             ))}
           </div>
         )}
-      </div>
+      </motion.div>
 
-      <div>
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {(productOnSale || product.promoLabel) && (
+          <div className="flex gap-2 mb-3">
+            {productOnSale && (
+              <span className="bg-lime text-bg text-xs font-bold px-2.5 py-1 rounded-full">
+                -{productPct}%
+              </span>
+            )}
+            {product.promoLabel && (
+              <span className="border border-lime text-lime text-xs px-2.5 py-1 rounded-full">
+                {product.promoLabel}
+              </span>
+            )}
+          </div>
+        )}
         <h1 className="text-3xl font-extrabold mb-3">{product.name}</h1>
         <p className="text-sub text-sm mb-5 leading-relaxed">{product.description}</p>
-        <div className="text-2xl font-extrabold mb-6">{formatGHS(unitPrice)}</div>
+        <div className="flex items-baseline gap-3 mb-6">
+          <span className="text-2xl font-extrabold">{formatGHS(unitPrice)}</span>
+          {productOnSale && (
+            <span className="text-base text-sub line-through">
+              {formatGHS(product.basePrice + (variant?.priceDelta ?? 0) + potTotal)}
+            </span>
+          )}
+        </div>
 
         {product.variants.length > 0 && (
           <div className="mb-6">
@@ -115,7 +134,7 @@ export default function ProductDetail({ product, pots }: { product: Product; pot
           </div>
         )}
 
-        {product.allowsPotAddon && pots.length > 0 && (
+        {product.allowsPotAddon && (product.potColorOptions?.length ?? 0) > 0 && (
           <div className="mb-6 glass p-5">
             <label className="flex items-center gap-3 mb-4 cursor-pointer">
               <input
@@ -128,62 +147,28 @@ export default function ProductDetail({ product, pots }: { product: Product; pot
             </label>
 
             {wantsPot && (
-              <div className="space-y-4">
-                <div className="flex flex-wrap gap-3">
-                  {potThumbnails.map((pot) => (
+              <div>
+                <p className="text-xs text-sub mb-2">Colour</p>
+                <div className="flex flex-wrap gap-2">
+                  {product.potColorOptions?.map((c) => (
                     <button
-                      key={pot.id}
-                      onClick={() => selectPot(pot)}
-                      className={`w-14 h-14 rounded-xl overflow-hidden relative bg-[#233318] border-2 ${
-                        selectedPot?.id === pot.id ? "border-lime" : "border-transparent"
+                      key={c.name}
+                      onClick={() => setPotColor(c)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs border ${
+                        potColor?.name === c.name
+                          ? "bg-lime text-bg border-lime"
+                          : "border-glass-border text-sub"
                       }`}
-                      title={pot.name}
                     >
-                      {pot.images[0] && <Image src={pot.images[0]} alt={pot.name} fill className="object-cover" />}
+                      <span
+                        className="w-3.5 h-3.5 rounded-full border border-glass-border shrink-0"
+                        style={{ backgroundColor: c.hex }}
+                      />
+                      {c.name}
+                      {c.priceDelta > 0 ? ` (+${formatGHS(c.priceDelta)})` : ""}
                     </button>
                   ))}
                 </div>
-
-                {selectedPot?.colorOptions && selectedPot.colorOptions.length > 0 && (
-                  <div>
-                    <p className="text-xs text-sub mb-2">Colour</p>
-                    <div className="flex gap-2">
-                      {selectedPot.colorOptions.map((c) => (
-                        <button
-                          key={c.name}
-                          onClick={() => setColor(c)}
-                          title={c.name}
-                          style={{ backgroundColor: c.hex }}
-                          className={`w-7 h-7 rounded-full border-2 ${
-                            color?.name === c.name ? "border-lime" : "border-glass-border"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedPot?.sizeOptions && selectedPot.sizeOptions.length > 0 && (
-                  <div>
-                    <p className="text-xs text-sub mb-2">Size</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedPot.sizeOptions.map((s) => (
-                        <button
-                          key={s.name}
-                          onClick={() => setSize(s)}
-                          className={`px-3 py-1.5 rounded-full text-xs border ${
-                            size?.name === s.name
-                              ? "bg-lime text-bg border-lime"
-                              : "border-glass-border text-sub"
-                          }`}
-                        >
-                          {s.name}
-                          {s.priceDelta > 0 ? ` (+${formatGHS(s.priceDelta)})` : ""}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
@@ -209,7 +194,7 @@ export default function ProductDetail({ product, pots }: { product: Product; pot
         >
           {!product.inStock ? "Sold Out" : added ? "Added!" : "Add to Cart"}
         </button>
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -10,22 +10,15 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Category, Product } from "@/types";
+import type { Product, ProductCategory } from "@/types";
 
 const PRODUCTS = "products";
-const CATEGORIES = "categories";
 
-export async function getCategories(): Promise<Category[]> {
-  const snap = await getDocs(collection(db, CATEGORIES));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Category));
-}
-
-export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const q = query(collection(db, CATEGORIES), where("slug", "==", slug));
-  const snap = await getDocs(q);
-  if (snap.empty) return null;
-  const d = snap.docs[0];
-  return { id: d.id, ...d.data() } as Category;
+// Firestore rejects `undefined` field values outright, but optional form
+// fields (e.g. salePrice when a product isn't on sale) naturally end up
+// undefined — strip them so writes don't fail for the common case.
+function stripUndefined<T extends object>(data: T): T {
+  return Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined)) as T;
 }
 
 export async function getProducts(): Promise<Product[]> {
@@ -39,8 +32,8 @@ export async function getFeaturedProducts(): Promise<Product[]> {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
 }
 
-export async function getProductsByCategory(categoryId: string): Promise<Product[]> {
-  const q = query(collection(db, PRODUCTS), where("categoryId", "==", categoryId));
+export async function getProductsByCategory(category: ProductCategory): Promise<Product[]> {
+  const q = query(collection(db, PRODUCTS), where("category", "==", category));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
 }
@@ -59,34 +52,15 @@ export async function getProductById(id: string): Promise<Product | null> {
   return { id: snap.id, ...snap.data() } as Product;
 }
 
-export async function getPotProducts(): Promise<Product[]> {
-  const category = await getCategoryBySlug("flower-pots");
-  if (!category) return [];
-  return getProductsByCategory(category.id);
-}
-
 export async function createProduct(data: Omit<Product, "id">): Promise<string> {
-  const ref = await addDoc(collection(db, PRODUCTS), data);
+  const ref = await addDoc(collection(db, PRODUCTS), stripUndefined(data));
   return ref.id;
 }
 
 export async function updateProduct(id: string, data: Partial<Product>): Promise<void> {
-  await updateDoc(doc(db, PRODUCTS, id), data);
+  await updateDoc(doc(db, PRODUCTS, id), stripUndefined(data));
 }
 
 export async function deleteProduct(id: string): Promise<void> {
   await deleteDoc(doc(db, PRODUCTS, id));
-}
-
-export async function createCategory(data: Omit<Category, "id">): Promise<string> {
-  const ref = await addDoc(collection(db, CATEGORIES), data);
-  return ref.id;
-}
-
-export async function updateCategory(id: string, data: Partial<Category>): Promise<void> {
-  await updateDoc(doc(db, CATEGORIES, id), data);
-}
-
-export async function deleteCategory(id: string): Promise<void> {
-  await deleteDoc(doc(db, CATEGORIES, id));
 }

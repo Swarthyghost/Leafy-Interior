@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Logo from "./Logo";
 import { useCartStore, useCartCount } from "@/store/cart";
 import { useFlyToCartStore } from "@/store/flyToCart";
@@ -9,8 +10,8 @@ import { useFlyToCartStore } from "@/store/flyToCart";
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/shop", label: "Shop Plants" },
-  { href: "/shop?type=pot", label: "Pots & Decor" },
-  { href: "/shop?type=figurine-home", label: "Figurines" },
+  { href: "/shop?type=pots", label: "Pots & Decor" },
+  { href: "/shop?type=figurines", label: "Figurines" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -22,6 +23,7 @@ export default function Navbar() {
   const cartIconRef = useRef<HTMLButtonElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [bumping, setBumping] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     function updateRect() {
@@ -41,8 +43,27 @@ export default function Navbar() {
     return () => clearTimeout(t);
   }, [cartBump]);
 
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 24);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <nav className="relative z-20 max-w-[1200px] mx-auto w-full px-6 md:px-10 flex items-center justify-between h-[92px]">
+    <header
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 border-b ${
+        scrolled || menuOpen
+          ? "bg-bg2/90 backdrop-blur-md border-glass-border"
+          : "bg-transparent border-transparent"
+      }`}
+    >
+      <nav
+        className="relative z-20 max-w-[1200px] mx-auto w-full px-6 md:px-10 flex items-center justify-between h-[92px] transition-[filter] duration-300"
+        style={{ filter: scrolled || menuOpen ? "none" : "drop-shadow(0 1px 3px rgba(0,0,0,0.55))" }}
+      >
       <Logo />
 
       <div className="hidden md:flex items-center gap-8 text-sm text-[#D6DBC9]">
@@ -77,27 +98,67 @@ export default function Navbar() {
             </span>
           )}
         </button>
-        <button aria-label="Menu" className="md:hidden" onClick={() => setMenuOpen((v) => !v)}>
+        <button
+          aria-label="Menu"
+          className="md:hidden relative w-[18px] h-[18px]"
+          onClick={() => setMenuOpen((v) => !v)}
+        >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
+            <motion.line
+              x1="3"
+              x2="21"
+              animate={menuOpen ? { y1: 12, y2: 12, rotate: 45 } : { y1: 6, y2: 6, rotate: 0 }}
+              style={{ originX: "50%", originY: "50%" }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            />
+            <motion.line
+              x1="3"
+              y1="12"
+              x2="21"
+              y2="12"
+              animate={{ opacity: menuOpen ? 0 : 1 }}
+              transition={{ duration: 0.15 }}
+            />
+            <motion.line
+              x1="3"
+              x2="21"
+              animate={menuOpen ? { y1: 12, y2: 12, rotate: -45 } : { y1: 18, y2: 18, rotate: 0 }}
+              style={{ originX: "50%", originY: "50%" }}
+              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            />
           </svg>
         </button>
       </div>
 
-      {menuOpen && (
-        <div
-          className="absolute top-[92px] left-0 right-0 md:hidden glass mx-4 p-4 flex flex-col gap-3 text-sm text-[#D6DBC9] shadow-xl"
-          style={{ background: "rgba(15, 27, 12, 0.97)" }}
-        >
-          {NAV_LINKS.map((link) => (
-            <Link key={link.label} href={link.href} onClick={() => setMenuOpen(false)} className="hover:text-lime">
-              {link.label}
-            </Link>
-          ))}
-        </div>
-      )}
-    </nav>
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="absolute top-[92px] left-0 right-0 md:hidden bg-bg2/90 backdrop-blur-md border-b border-glass-border px-6 py-4 flex flex-col gap-1 text-sm text-[#D6DBC9] overflow-hidden"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {NAV_LINKS.map((link, i) => (
+              <motion.div
+                key={link.label}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.25, delay: 0.05 + i * 0.04, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <Link
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="block py-2 hover:text-lime"
+                >
+                  {link.label}
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      </nav>
+    </header>
   );
 }

@@ -1,15 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Product } from "@/types";
+import HeroVideoBackground from "./HeroVideoBackground";
 
 export default function Hero({ spotlightProduct }: { spotlightProduct: Product | null }) {
   return (
     <div className="relative pb-16">
-      <div className="leafy-bg">
-        <Image src="/images/hero-leaves.png" alt="" fill priority className="object-cover" />
+      <div className="leafy-bg absolute inset-0">
+        <HeroVideoBackground />
       </div>
 
-      <section className="relative z-10 pt-8 md:pt-12 pb-8">
+      <section className="relative z-10 pt-[124px] md:pt-[140px] pb-8">
         <div className="max-w-[1200px] mx-auto w-full px-6 md:px-10 relative">
           <h1 className="text-[clamp(38px,6vw,72px)] font-extrabold leading-[1.05] max-w-[9ch]">
             Style Naturally, Zero Upkeep

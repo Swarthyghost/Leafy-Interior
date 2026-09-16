@@ -1,91 +1,72 @@
 "use client";
 
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { auth, ADMIN_UID } from "@/lib/firebase";
+
+const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN;
+const SESSION_KEY = "leafy-admin-unlocked";
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [unlocked, setUnlocked] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-    });
-    return unsub;
+    if (!ADMIN_PIN || sessionStorage.getItem(SESSION_KEY) === "true") {
+      setUnlocked(true);
+    }
+    setChecked(true);
   }, []);
 
-  async function handleLogin(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
-    setSigningIn(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch {
-      setError("Invalid email or password.");
-    } finally {
-      setSigningIn(false);
+    if (pin === ADMIN_PIN) {
+      sessionStorage.setItem(SESSION_KEY, "true");
+      setUnlocked(true);
+      setError(null);
+    } else {
+      setError("Incorrect PIN.");
     }
   }
 
-  if (loading) {
-    return <div className="max-w-md mx-auto px-6 py-24 text-center text-sub text-sm">Loading…</div>;
+  if (!checked) return null;
+
+  if (!ADMIN_PIN) {
+    return (
+      <>
+        <div className="mb-6 px-4 py-2.5 rounded-xl bg-clay/20 border border-clay text-clay text-xs text-center">
+          No NEXT_PUBLIC_ADMIN_PIN is set — /admin is wide open. Set one before deploying.
+        </div>
+        {children}
+      </>
+    );
   }
 
-  if (!user) {
+  if (!unlocked) {
     return (
-      <div className="max-w-md mx-auto px-6 py-24">
-        <h1 className="text-2xl font-extrabold mb-6 text-center">Admin Login</h1>
-        <form onSubmit={handleLogin} className="glass p-6 space-y-4">
+      <div className="max-w-sm mx-auto px-6 py-24">
+        <h1 className="text-2xl font-extrabold mb-6 text-center">Admin Access</h1>
+        <form onSubmit={handleSubmit} className="glass p-6 space-y-4">
           <div>
-            <label className="block text-xs text-sub mb-1.5">Email</label>
+            <label className="block text-xs text-sub mb-1.5">PIN</label>
             <input
               required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-sub mb-1.5">Password</label>
-            <input
-              required
+              autoFocus
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              inputMode="numeric"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
               className="w-full px-4 py-3 rounded-xl border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
             />
           </div>
           {error && <p className="text-clay text-xs">{error}</p>}
           <button
             type="submit"
-            disabled={signingIn}
-            className="w-full py-3.5 rounded-full bg-text text-bg font-bold text-sm disabled:opacity-50"
+            className="w-full py-3.5 rounded-full bg-text text-bg font-bold text-sm"
           >
-            {signingIn ? "Signing in…" : "Sign In"}
+            Unlock
           </button>
         </form>
-      </div>
-    );
-  }
-
-  if (!ADMIN_UID || user.uid !== ADMIN_UID) {
-    return (
-      <div className="max-w-md mx-auto px-6 py-24 text-center">
-        <h1 className="text-xl font-bold mb-3">Not authorized</h1>
-        <p className="text-sub text-sm mb-6">This account isn&apos;t allowed to access the admin dashboard.</p>
-        <button
-          onClick={() => signOut(auth)}
-          className="px-6 py-2.5 rounded-full border border-glass-border text-sm"
-        >
-          Sign out
-        </button>
       </div>
     );
   }

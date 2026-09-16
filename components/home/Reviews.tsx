@@ -1,3 +1,5 @@
+import FadeIn from "@/components/ui/FadeIn";
+
 const REVIEWS = [
   {
     name: "Kwame A.",
@@ -20,12 +22,12 @@ export default function Reviews() {
   return (
     <section className="pb-20 md:pb-[90px]">
       <div className="max-w-[1200px] mx-auto w-full px-6 md:px-10">
-        <div className="section-title text-center mb-12">
+        <FadeIn className="section-title text-center mb-12">
           <h2 className="text-[30px] font-extrabold">Customer Review</h2>
-        </div>
+        </FadeIn>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {REVIEWS.map((review) => (
-            <div key={review.name} className="glass p-6">
+          {REVIEWS.map((review, i) => (
+            <FadeIn key={review.name} delay={i * 0.08} className="glass p-6">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#7C8A6E] to-[#3F4A32] shrink-0" />
                 <div>
@@ -34,7 +36,7 @@ export default function Reviews() {
                 </div>
               </div>
               <p className="text-[13px] text-sub">{review.text}</p>
-            </div>
+            </FadeIn>
           ))}
         </div>
       </div>

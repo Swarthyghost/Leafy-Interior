@@ -1,7 +1,9 @@
 import Link from "next/link";
 import ProductCard from "@/components/product/ProductCard";
-import { getCategories, getProducts } from "@/lib/products";
-import type { Category, Product } from "@/types";
+import FadeIn from "@/components/ui/FadeIn";
+import { getProducts } from "@/lib/products";
+import { PRODUCT_CATEGORIES, categoryLabel } from "@/lib/categories";
+import type { Product, ProductCategory } from "@/types";
 
 async function safeLoad<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try {
@@ -11,59 +13,46 @@ async function safeLoad<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   }
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  plant: "Plants",
-  pot: "Pots & Decor",
-  "figurine-home": "Home Figurines",
-  "figurine-office": "Office Figurines",
-};
+function isProductCategory(value: string): value is ProductCategory {
+  return PRODUCT_CATEGORIES.some((c) => c.id === value);
+}
 
-export default async function ShopPage({
-  searchParams,
-}: PageProps<"/shop">) {
+export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
   const params = await searchParams;
-  const activeType = typeof params.type === "string" ? params.type : undefined;
+  const typeParam = typeof params.type === "string" ? params.type : undefined;
+  const activeCategory = typeParam && isProductCategory(typeParam) ? typeParam : undefined;
 
-  const [products, categories] = await Promise.all([
-    safeLoad<Product[]>(getProducts, []),
-    safeLoad<Category[]>(getCategories, []),
-  ]);
+  const products = await safeLoad<Product[]>(getProducts, []);
 
-  const categoryIdsForType = activeType
-    ? categories.filter((c) => c.type === activeType).map((c) => c.id)
-    : null;
-
-  const filtered = categoryIdsForType
-    ? products.filter((p) => categoryIdsForType.includes(p.categoryId))
+  const filtered = activeCategory
+    ? products.filter((p) => p.category === activeCategory)
     : products;
-
-  const types = Object.keys(TYPE_LABELS);
 
   return (
     <section className="py-16">
       <div className="max-w-[1200px] mx-auto w-full px-6 md:px-10">
-        <div className="section-title text-center mb-10">
+        <FadeIn className="section-title text-center mb-10">
           <h2 className="text-[30px] font-extrabold">Shop</h2>
-        </div>
+        </FadeIn>
 
         <div className="flex flex-wrap justify-center gap-3 mb-10">
           <Link
             href="/shop"
             className={`px-5 py-2 rounded-full text-sm border ${
-              !activeType ? "bg-lime text-bg border-lime" : "border-glass-border text-sub"
+              !activeCategory ? "bg-lime text-bg border-lime" : "border-glass-border text-sub"
             }`}
           >
             All
           </Link>
-          {types.map((type) => (
+          {PRODUCT_CATEGORIES.map((c) => (
             <Link
-              key={type}
-              href={`/shop?type=${type}`}
+              key={c.id}
+              href={`/shop?type=${c.id}`}
               className={`px-5 py-2 rounded-full text-sm border ${
-                activeType === type ? "bg-lime text-bg border-lime" : "border-glass-border text-sub"
+                activeCategory === c.id ? "bg-lime text-bg border-lime" : "border-glass-border text-sub"
               }`}
             >
-              {TYPE_LABELS[type]}
+              {c.label}
             </Link>
           ))}
         </div>
@@ -72,10 +61,11 @@ export default async function ShopPage({
           <p className="text-center text-sub text-sm">No products found in this category yet.</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {filtered.map((product) => {
-              const category = categories.find((c) => c.id === product.categoryId);
-              return <ProductCard key={product.id} product={product} subtitle={category?.name} />;
-            })}
+            {filtered.map((product, i) => (
+              <FadeIn key={product.id} delay={(i % 8) * 0.05}>
+                <ProductCard product={product} subtitle={categoryLabel(product.category)} />
+              </FadeIn>
+            ))}
           </div>
         )}
       </div>

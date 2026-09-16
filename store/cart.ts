@@ -14,9 +14,7 @@ interface CartState {
 }
 
 function makeLineId(item: Omit<CartLineItem, "lineId">): string {
-  return [item.productId, item.variant?.id ?? "novariant", item.pot?.productId ?? "nopot", item.pot?.colorName ?? "", item.pot?.sizeName ?? ""].join(
-    "::"
-  );
+  return [item.productId, item.variant?.id ?? "novariant", item.pot?.colorName ?? "nopot"].join("::");
 }
 
 export const useCartStore = create<CartState>()(

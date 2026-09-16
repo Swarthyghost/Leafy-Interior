@@ -3,8 +3,8 @@ import TrendyPicks from "@/components/home/TrendyPicks";
 import TopSelling from "@/components/home/TopSelling";
 import Reviews from "@/components/home/Reviews";
 import SpotlightBanner from "@/components/home/SpotlightBanner";
-import { getCategories, getFeaturedProducts, getProducts } from "@/lib/products";
-import type { Category, Product } from "@/types";
+import { getFeaturedProducts, getProducts } from "@/lib/products";
+import type { Product } from "@/types";
 
 async function safeLoad<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try {
@@ -15,10 +15,9 @@ async function safeLoad<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 }
 
 export default async function Home() {
-  const [products, featured, categories] = await Promise.all([
+  const [products, featured] = await Promise.all([
     safeLoad<Product[]>(getProducts, []),
     safeLoad<Product[]>(getFeaturedProducts, []),
-    safeLoad<Category[]>(getCategories, []),
   ]);
 
   const spotlightProduct = featured[0] ?? products[0] ?? null;
@@ -27,17 +26,17 @@ export default async function Home() {
   const trendyPanels = products.slice(0, 2).map((product) => ({
     product,
     description: product.allowsPotAddon
-      ? "Pick any plant, then choose a pot colour and size — price adjusts as you go."
-      : "Matte, glazed and terracotta finishes in three sizes — sold solo or as a pairing.",
+      ? "Pick any plant, then choose a pot colour — price adjusts as you go."
+      : "Matte, glazed and terracotta finishes — sold solo or as a pairing.",
   }));
 
   return (
     <>
       <Hero spotlightProduct={spotlightProduct} />
       <TrendyPicks panels={trendyPanels} />
-      <TopSelling products={topSelling} categories={categories} />
+      <TopSelling products={topSelling} />
       <Reviews />
-      <SpotlightBanner image={products.find((p) => !p.allowsPotAddon)?.images[0]} />
+      <SpotlightBanner />
     </>
   );
 }

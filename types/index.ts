@@ -1,12 +1,4 @@
-export type CategoryType = "plant" | "pot" | "figurine-home" | "figurine-office";
-
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  type: CategoryType;
-  coverImageUrl: string;
-}
+export type ProductCategory = "flowers" | "pots" | "figurines";
 
 export interface ProductVariant {
   id: string;
@@ -15,13 +7,10 @@ export interface ProductVariant {
   stock: number;
 }
 
-export interface ColorOption {
+/** A colour choice offered when adding a pot to a plant, each with its own price. */
+export interface PotColorOption {
   name: string;
   hex: string;
-}
-
-export interface SizeOption {
-  name: string;
   priceDelta: number;
 }
 
@@ -29,7 +18,7 @@ export interface Product {
   id: string;
   name: string;
   slug: string;
-  categoryId: string;
+  category: ProductCategory;
   description: string;
   basePrice: number;
   images: string[];
@@ -37,17 +26,15 @@ export interface Product {
   inStock: boolean;
   variants: ProductVariant[];
   allowsPotAddon: boolean;
-  colorOptions?: ColorOption[];
-  sizeOptions?: SizeOption[];
+  potColorOptions?: PotColorOption[];
+  onSale?: boolean;
+  salePrice?: number;
+  promoLabel?: string;
 }
 
 export interface PotSelection {
-  productId: string;
-  name: string;
-  image: string;
-  colorName?: string;
-  colorHex?: string;
-  sizeName?: string;
+  colorName: string;
+  colorHex: string;
   priceDelta: number;
 }
 

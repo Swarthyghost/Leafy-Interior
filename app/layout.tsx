@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
+import NavSpacer from "@/components/layout/NavSpacer";
 import Footer from "@/components/layout/Footer";
 import CartDrawer from "@/components/cart/CartDrawer";
 import FlyToCartLayer from "@/components/cart/FlyToCartLayer";
@@ -20,9 +21,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${manrope.variable} h-full antialiased`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${manrope.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-bg text-text">
         <Navbar />
+        <NavSpacer />
         <main className="flex-1">{children}</main>
         <Footer />
         <CartDrawer />

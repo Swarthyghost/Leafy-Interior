@@ -3,18 +3,16 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAdmin() {
-      return request.auth != null && request.auth.uid == "REPLACE_WITH_ADMIN_UID";
-    }
-
-    match /categories/{categoryId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
+    // Categories are hardcoded in lib/categories.ts, not a Firestore collection.
     match /products/{productId} {
       allow read: if true;
-      allow write: if isAdmin();
+
+      // TEMPORARY: /admin is currently gated by a client-side PIN (see
+      // components/admin/AuthGate.tsx), not Firebase Auth, so there's no
+      // request.auth to check here yet — writes are wide open. Before this
+      // site goes live, replace this with real Firebase Auth (email/password)
+      // and gate writes on request.auth.uid == "<your admin UID>".
+      allow write: if true;
     }
 
     match /{document=**} {

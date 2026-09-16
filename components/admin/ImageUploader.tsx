@@ -23,7 +23,7 @@ export default function ImageUploader({
       const uploaded = await Promise.all(Array.from(files).map((f) => uploadToCloudinary(f)));
       onChange([...images, ...uploaded]);
     } catch {
-      setError("Upload failed. Check your Cloudinary cloud name and upload preset.");
+      setError("Upload failed. Check your Cloudinary cloud name, API key, and API secret.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";

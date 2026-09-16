@@ -7,7 +7,7 @@ import Logo from "./Logo";
 const QUICK_LINKS = [
   { href: "/", label: "Home" },
   { href: "/shop", label: "Shop Plants" },
-  { href: "/shop?type=pot", label: "Pots & Decor" },
+  { href: "/shop?type=pots", label: "Pots & Decor" },
   { href: "/contact", label: "Contact" },
 ];
 

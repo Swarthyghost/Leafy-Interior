@@ -24,8 +24,7 @@ export function buildWhatsAppMessage(items: CartLineItem[], customer: CustomerIn
     line += ` x${item.quantity} - ${formatGHS(lineItemTotal(item))}`;
     lines.push(line);
     if (item.pot) {
-      const potBits = [item.pot.colorName, item.pot.sizeName].filter(Boolean).join(" / ");
-      lines.push(`   + Pot: ${item.pot.name}${potBits ? ` (${potBits})` : ""}`);
+      lines.push(`   + Pot (${item.pot.colorName})`);
     }
   });
 

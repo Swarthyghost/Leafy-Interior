@@ -54,12 +54,7 @@ export default function CartDrawer() {
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-bold truncate">{item.name}</h4>
                     {item.variant && <p className="text-xs text-sub">{item.variant.label}</p>}
-                    {item.pot && (
-                      <p className="text-xs text-sub">
-                        + Pot: {item.pot.name}
-                        {item.pot.colorName ? ` (${item.pot.colorName}${item.pot.sizeName ? ` / ${item.pot.sizeName}` : ""})` : ""}
-                      </p>
-                    )}
+                    {item.pot && <p className="text-xs text-sub">+ Pot ({item.pot.colorName})</p>}
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2 border border-glass-border rounded-full px-2 py-1">
                         <button

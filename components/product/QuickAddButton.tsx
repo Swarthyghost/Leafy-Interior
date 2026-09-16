@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useCartStore } from "@/store/cart";
 import { useFlyToCartStore } from "@/store/flyToCart";
+import { effectivePrice } from "@/lib/pricing";
 import type { Product } from "@/types";
 
 export default function QuickAddButton({ product }: { product: Product }) {
@@ -15,7 +16,7 @@ export default function QuickAddButton({ product }: { product: Product }) {
       productId: product.id,
       name: product.name,
       image: product.images[0] ?? "",
-      basePrice: product.basePrice,
+      basePrice: effectivePrice(product),
       quantity: 1,
       variant: product.variants[0],
     });

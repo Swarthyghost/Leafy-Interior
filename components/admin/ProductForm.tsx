@@ -3,16 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/admin/ImageUploader";
+import AdminError from "@/components/admin/AdminError";
 import { createProduct, updateProduct, deleteProduct } from "@/lib/products";
-import type { Category, ColorOption, Product, ProductVariant, SizeOption } from "@/types";
+import { discountPercent } from "@/lib/pricing";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
+import type { PotColorOption, Product, ProductVariant } from "@/types";
 
 type FormState = Omit<Product, "id">;
 
-function emptyProduct(categories: Category[]): FormState {
+function emptyProduct(): FormState {
   return {
     name: "",
     slug: "",
-    categoryId: categories[0]?.id ?? "",
+    category: PRODUCT_CATEGORIES[0].id,
     description: "",
     basePrice: 0,
     images: [],
@@ -20,24 +23,18 @@ function emptyProduct(categories: Category[]): FormState {
     inStock: true,
     variants: [],
     allowsPotAddon: false,
-    colorOptions: [],
-    sizeOptions: [],
+    potColorOptions: [],
+    onSale: false,
+    salePrice: undefined,
+    promoLabel: "",
   };
 }
 
-export default function ProductForm({
-  categories,
-  product,
-}: {
-  categories: Category[];
-  product?: Product;
-}) {
+export default function ProductForm({ product }: { product?: Product }) {
   const router = useRouter();
-  const [form, setForm] = useState<FormState>(product ?? emptyProduct(categories));
+  const [form, setForm] = useState<FormState>(product ?? emptyProduct());
   const [saving, setSaving] = useState(false);
-
-  const activeCategory = categories.find((c) => c.id === form.categoryId);
-  const isPotCategory = activeCategory?.type === "pot";
+  const [error, setError] = useState<string | null>(null);
 
   function updateVariant(index: number, patch: Partial<ProductVariant>) {
     setForm({
@@ -60,39 +57,31 @@ export default function ProductForm({
     setForm({ ...form, variants: form.variants.filter((_, i) => i !== index) });
   }
 
-  function updateColor(index: number, patch: Partial<ColorOption>) {
+  function updatePotColor(index: number, patch: Partial<PotColorOption>) {
     setForm({
       ...form,
-      colorOptions: (form.colorOptions ?? []).map((c, i) => (i === index ? { ...c, ...patch } : c)),
+      potColorOptions: (form.potColorOptions ?? []).map((c, i) => (i === index ? { ...c, ...patch } : c)),
     });
   }
 
-  function addColor() {
-    setForm({ ...form, colorOptions: [...(form.colorOptions ?? []), { name: "", hex: "#c58347" }] });
-  }
-
-  function removeColor(index: number) {
-    setForm({ ...form, colorOptions: (form.colorOptions ?? []).filter((_, i) => i !== index) });
-  }
-
-  function updateSize(index: number, patch: Partial<SizeOption>) {
+  function addPotColor() {
     setForm({
       ...form,
-      sizeOptions: (form.sizeOptions ?? []).map((s, i) => (i === index ? { ...s, ...patch } : s)),
+      potColorOptions: [...(form.potColorOptions ?? []), { name: "", hex: "#111111", priceDelta: 0 }],
     });
   }
 
-  function addSize() {
-    setForm({ ...form, sizeOptions: [...(form.sizeOptions ?? []), { name: "", priceDelta: 0 }] });
-  }
-
-  function removeSize(index: number) {
-    setForm({ ...form, sizeOptions: (form.sizeOptions ?? []).filter((_, i) => i !== index) });
+  function removePotColor(index: number) {
+    setForm({
+      ...form,
+      potColorOptions: (form.potColorOptions ?? []).filter((_, i) => i !== index),
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setError(null);
     try {
       if (product) {
         await updateProduct(product.id, form);
@@ -101,6 +90,8 @@ export default function ProductForm({
       }
       router.push("/admin/products");
       router.refresh();
+    } catch {
+      setError("Couldn't save this product. Check that Firestore is set up and reachable.");
     } finally {
       setSaving(false);
     }
@@ -108,9 +99,13 @@ export default function ProductForm({
 
   async function handleDelete() {
     if (!product || !confirm("Delete this product?")) return;
-    await deleteProduct(product.id);
-    router.push("/admin/products");
-    router.refresh();
+    try {
+      await deleteProduct(product.id);
+      router.push("/admin/products");
+      router.refresh();
+    } catch {
+      setError("Couldn't delete this product. Check that Firestore is set up and reachable.");
+    }
   }
 
   return (
@@ -151,13 +146,13 @@ export default function ProductForm({
           <div>
             <label className="block text-xs text-sub mb-1.5">Category</label>
             <select
-              value={form.categoryId}
-              onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+              value={form.category}
+              onChange={(e) => setForm({ ...form, category: e.target.value as Product["category"] })}
               className="w-full px-3 py-2.5 rounded-xl border border-glass-border bg-bg2 text-sm outline-none"
             >
-              {categories.map((c) => (
+              {PRODUCT_CATEGORIES.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {c.label}
                 </option>
               ))}
             </select>
@@ -200,7 +195,7 @@ export default function ProductForm({
             />
             In Stock
           </label>
-          {!isPotCategory && (
+          {form.category === "flowers" && (
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
                 type="checkbox"
@@ -212,6 +207,50 @@ export default function ProductForm({
             </label>
           )}
         </div>
+
+        {form.category === "flowers" && form.allowsPotAddon && (
+          <div className="pt-3 border-t border-line">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-xs font-bold text-sub">Pot Colour Options</h4>
+              <button type="button" onClick={addPotColor} className="text-xs text-lime">
+                + Add colour
+              </button>
+            </div>
+            <div className="space-y-2">
+              {(form.potColorOptions ?? []).map((c, i) => (
+                <div key={i} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
+                  <input
+                    placeholder="Colour name (e.g. Black)"
+                    value={c.name}
+                    onChange={(e) => updatePotColor(i, { name: e.target.value })}
+                    className="px-3 py-2 rounded-lg border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
+                  />
+                  <input
+                    type="color"
+                    value={c.hex}
+                    onChange={(e) => updatePotColor(i, { hex: e.target.value })}
+                    className="w-10 h-9 rounded-lg border border-glass-border bg-transparent"
+                  />
+                  <input
+                    type="number"
+                    placeholder="+price"
+                    value={c.priceDelta}
+                    onChange={(e) => updatePotColor(i, { priceDelta: Number(e.target.value) })}
+                    className="w-24 px-3 py-2 rounded-lg border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
+                  />
+                  <button type="button" onClick={() => removePotColor(i)} className="text-clay text-xs">
+                    Remove
+                  </button>
+                </div>
+              ))}
+              {(form.potColorOptions ?? []).length === 0 && (
+                <p className="text-xs text-sub">
+                  No colours yet — add one (e.g. Black, White) so shoppers can choose a pot colour.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="glass p-5">
@@ -253,70 +292,59 @@ export default function ProductForm({
         </div>
       </div>
 
-      {isPotCategory && (
-        <>
-          <div className="glass p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold">Colour Options</h3>
-              <button type="button" onClick={addColor} className="text-xs text-lime">
-                + Add colour
-              </button>
-            </div>
-            <div className="space-y-2">
-              {(form.colorOptions ?? []).map((c, i) => (
-                <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
-                  <input
-                    placeholder="Colour name"
-                    value={c.name}
-                    onChange={(e) => updateColor(i, { name: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
-                  />
-                  <input
-                    type="color"
-                    value={c.hex}
-                    onChange={(e) => updateColor(i, { hex: e.target.value })}
-                    className="w-10 h-9 rounded-lg border border-glass-border bg-transparent"
-                  />
-                  <button type="button" onClick={() => removeColor(i)} className="text-clay text-xs">
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+      <div className="glass p-5 space-y-3">
+        <h3 className="text-sm font-bold mb-1">Promo &amp; Discount</h3>
 
-          <div className="glass p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-bold">Size Options</h3>
-              <button type="button" onClick={addSize} className="text-xs text-lime">
-                + Add size
-              </button>
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.onSale ?? false}
+            onChange={(e) => setForm({ ...form, onSale: e.target.checked })}
+            className="w-4 h-4 accent-lime"
+          />
+          On sale
+        </label>
+
+        {form.onSale && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-end">
+            <div>
+              <label className="block text-xs text-sub mb-1.5">Sale Price (GH₵)</label>
+              <input
+                type="number"
+                min={0}
+                step={0.01}
+                value={form.salePrice ?? ""}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    salePrice: e.target.value === "" ? undefined : Number(e.target.value),
+                  })
+                }
+                className="w-full px-3 py-2.5 rounded-xl border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
+              />
             </div>
-            <div className="space-y-2">
-              {(form.sizeOptions ?? []).map((s, i) => (
-                <div key={i} className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
-                  <input
-                    placeholder="Size name"
-                    value={s.name}
-                    onChange={(e) => updateSize(i, { name: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
-                  />
-                  <input
-                    type="number"
-                    placeholder="+price"
-                    value={s.priceDelta}
-                    onChange={(e) => updateSize(i, { priceDelta: Number(e.target.value) })}
-                    className="w-24 px-3 py-2 rounded-lg border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
-                  />
-                  <button type="button" onClick={() => removeSize(i)} className="text-clay text-xs">
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs text-sub pb-2.5">
+              {(() => {
+                const pct = discountPercent(form);
+                if (pct === null) return "Enter a sale price lower than the base price to see the discount.";
+                return `${pct}% off ${form.basePrice ? `(was GH₵ ${form.basePrice})` : ""}`;
+              })()}
+            </p>
           </div>
-        </>
-      )}
+        )}
+
+        <div>
+          <label className="block text-xs text-sub mb-1.5">Promo Label (optional)</label>
+          <input
+            placeholder="e.g. New, Bestseller, Limited Stock"
+            value={form.promoLabel ?? ""}
+            onChange={(e) => setForm({ ...form, promoLabel: e.target.value })}
+            className="w-full px-3 py-2.5 rounded-xl border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
+          />
+        </div>
+      </div>
+
+      {error && <AdminError message={error} />}
 
       <div className="flex gap-3">
         <button
