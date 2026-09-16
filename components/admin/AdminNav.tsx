@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { hasAdminPin } from "@/app/actions/admin";
+
 const SESSION_KEY = "leafy-admin-unlocked";
 
 function handleLock() {
@@ -8,10 +11,16 @@ function handleLock() {
 }
 
 export default function AdminNav() {
+  const [pinRequired, setPinRequired] = useState(false);
+
+  useEffect(() => {
+    hasAdminPin().then(setPinRequired);
+  }, []);
+
   return (
     <div className="flex items-center justify-between mb-8">
       <span className="text-xs uppercase tracking-wider text-sub">Admin Dashboard</span>
-      {process.env.NEXT_PUBLIC_ADMIN_PIN && (
+      {pinRequired && (
         <button onClick={handleLock} className="text-xs text-sub hover:text-text">
           Lock
         </button>

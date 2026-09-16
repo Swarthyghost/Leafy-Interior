@@ -1,41 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { verifyAdminPin, hasAdminPin } from "@/app/actions/admin";
 
-const ADMIN_PIN = process.env.NEXT_PUBLIC_ADMIN_PIN;
 const SESSION_KEY = "leafy-admin-unlocked";
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [unlocked, setUnlocked] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [pinRequired, setPinRequired] = useState(true);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    if (!ADMIN_PIN || sessionStorage.getItem(SESSION_KEY) === "true") {
-      setUnlocked(true);
+    async function checkSetup() {
+      const isRequired = await hasAdminPin();
+      setPinRequired(isRequired);
+      if (!isRequired || sessionStorage.getItem(SESSION_KEY) === "true") {
+        setUnlocked(true);
+      }
+      setChecked(true);
     }
-    setChecked(true);
+    checkSetup();
   }, []);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (pin === ADMIN_PIN) {
-      sessionStorage.setItem(SESSION_KEY, "true");
-      setUnlocked(true);
-      setError(null);
-    } else {
-      setError("Incorrect PIN.");
-    }
+    startTransition(async () => {
+      const valid = await verifyAdminPin(pin);
+      if (valid) {
+        sessionStorage.setItem(SESSION_KEY, "true");
+        setUnlocked(true);
+        setError(null);
+      } else {
+        setError("Incorrect PIN.");
+      }
+    });
   }
 
   if (!checked) return null;
 
-  if (!ADMIN_PIN) {
+  if (!pinRequired) {
     return (
       <>
         <div className="mb-6 px-4 py-2.5 rounded-xl bg-clay/20 border border-clay text-clay text-xs text-center">
-          No NEXT_PUBLIC_ADMIN_PIN is set — /admin is wide open. Set one before deploying.
+          No ADMIN_PIN is set — /admin is wide open. Set one before deploying.
         </div>
         {children}
       </>
@@ -62,9 +72,10 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
           {error && <p className="text-clay text-xs">{error}</p>}
           <button
             type="submit"
-            className="w-full py-3.5 rounded-full bg-text text-bg font-bold text-sm"
+            disabled={isPending}
+            className="w-full py-3.5 rounded-full bg-text text-bg font-bold text-sm disabled:opacity-50"
           >
-            Unlock
+            {isPending ? "Unlocking..." : "Unlock"}
           </button>
         </form>
       </div>

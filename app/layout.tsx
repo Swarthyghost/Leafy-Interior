@@ -17,6 +17,15 @@ export const metadata: Metadata = {
   title: "Leafy Interior Ghana | Faux Plants, Pots & Figurines",
   description:
     "Faux plants, flower pots and figurine decor that make every room in Accra feel fresh, styled and alive.",
+  openGraph: {
+    title: "Leafy Interior Ghana | Faux Plants, Pots & Figurines",
+    description:
+      "Faux plants, flower pots and figurine decor that make every room in Accra feel fresh, styled and alive.",
+    url: "https://leafyinteriorghana.com", // Adjust as per real domain
+    siteName: "Leafy Interior Ghana",
+    locale: "en_GH",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
