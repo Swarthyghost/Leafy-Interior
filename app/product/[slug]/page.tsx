@@ -1,7 +1,7 @@
 import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import ProductDetail from "@/components/product/ProductDetail";
-import { getProductBySlug } from "@/lib/products";
+import { getProductBySlug, getProductsByCategory } from "@/lib/products";
 
 export async function generateMetadata(
   { params }: PageProps<"/product/[slug]">,
@@ -51,5 +51,14 @@ export default async function ProductPage({ params }: PageProps<"/product/[slug]
 
   if (!product) notFound();
 
-  return <ProductDetail product={product} />;
+  let pots: Awaited<ReturnType<typeof getProductsByCategory>> = [];
+  if (product.allowsPotAddon) {
+    try {
+      pots = await getProductsByCategory("pots");
+    } catch {
+      pots = [];
+    }
+  }
+
+  return <ProductDetail product={product} pots={pots} />;
 }

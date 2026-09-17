@@ -1,7 +1,7 @@
 import type { ProductCategory } from "@/types";
 
 export const PRODUCT_CATEGORIES: { id: ProductCategory; label: string }[] = [
-  { id: "flowers", label: "Flowers" },
+  { id: "flowers", label: "Shop Plants" },
   { id: "pots", label: "Pots" },
   { id: "figurines", label: "Figurines & Ornaments" },
 ];

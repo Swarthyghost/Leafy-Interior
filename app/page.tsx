@@ -4,6 +4,7 @@ import TopSelling from "@/components/home/TopSelling";
 import Reviews from "@/components/home/Reviews";
 import SpotlightBanner from "@/components/home/SpotlightBanner";
 import { getFeaturedProducts, getProducts } from "@/lib/products";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import type { Product } from "@/types";
 
 async function safeLoad<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
@@ -14,6 +15,15 @@ async function safeLoad<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   }
 }
 
+/** One representative product per category — preferring featured, then in-stock. */
+function highlightPerCategory(products: Product[]): Product[] {
+  return PRODUCT_CATEGORIES.map(({ id }) => {
+    const inCategory = products.filter((p) => p.category === id);
+    if (inCategory.length === 0) return null;
+    return inCategory.find((p) => p.featured) ?? inCategory.find((p) => p.inStock) ?? inCategory[0];
+  }).filter((p): p is Product => p !== null);
+}
+
 export default async function Home() {
   const [products, featured] = await Promise.all([
     safeLoad<Product[]>(getProducts, []),
@@ -21,7 +31,7 @@ export default async function Home() {
   ]);
 
   const spotlightProduct = featured[0] ?? products[0] ?? null;
-  const topSelling = (featured.length ? featured : products).slice(0, 6);
+  const topSelling = highlightPerCategory(products);
 
   const trendyPanels = products.slice(0, 2).map((product) => ({
     product,

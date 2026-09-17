@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import Logo from "./Logo";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
 const QUICK_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/shop", label: "Shop Plants" },
-  { href: "/shop?type=pots", label: "Pots & Decor" },
+  ...PRODUCT_CATEGORIES.map((c) => ({ href: `/shop?type=${c.id}`, label: c.label })),
   { href: "/contact", label: "Contact" },
 ];
 

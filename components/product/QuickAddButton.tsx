@@ -19,6 +19,7 @@ export default function QuickAddButton({ product }: { product: Product }) {
       basePrice: effectivePrice(product),
       quantity: 1,
       variant: product.variants[0],
+      allowsPotAddon: product.allowsPotAddon,
     });
 
     if (btnRef.current && product.images[0]) {

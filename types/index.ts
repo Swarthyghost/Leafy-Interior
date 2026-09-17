@@ -7,13 +7,6 @@ export interface ProductVariant {
   stock: number;
 }
 
-/** A colour choice offered when adding a pot to a plant, each with its own price. */
-export interface PotColorOption {
-  name: string;
-  hex: string;
-  priceDelta: number;
-}
-
 export interface Product {
   id: string;
   name: string;
@@ -26,15 +19,16 @@ export interface Product {
   inStock: boolean;
   variants: ProductVariant[];
   allowsPotAddon: boolean;
-  potColorOptions?: PotColorOption[];
   onSale?: boolean;
   salePrice?: number;
   promoLabel?: string;
 }
 
+/** A real pot product added alongside a plant, at that pot's own price. */
 export interface PotSelection {
-  colorName: string;
-  colorHex: string;
+  productId: string;
+  name: string;
+  image: string;
   priceDelta: number;
 }
 
@@ -47,6 +41,8 @@ export interface CartLineItem {
   quantity: number;
   variant?: ProductVariant;
   pot?: PotSelection;
+  /** Whether this item can still have a pot added, offered from the real Pots catalog. */
+  allowsPotAddon?: boolean;
 }
 
 export interface CustomerInfo {

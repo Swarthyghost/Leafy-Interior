@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { CartLineItem } from "@/types";
+import type { CartLineItem, PotSelection } from "@/types";
 
 interface CartState {
   items: CartLineItem[];
@@ -8,13 +8,14 @@ interface CartState {
   addItem: (item: Omit<CartLineItem, "lineId">) => void;
   removeItem: (lineId: string) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
+  setPot: (lineId: string, pot: PotSelection | undefined) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
 }
 
 function makeLineId(item: Omit<CartLineItem, "lineId">): string {
-  return [item.productId, item.variant?.id ?? "novariant", item.pot?.colorName ?? "nopot"].join("::");
+  return [item.productId, item.variant?.id ?? "novariant", item.pot?.productId ?? "nopot"].join("::");
 }
 
 export const useCartStore = create<CartState>()(
@@ -44,6 +45,8 @@ export const useCartStore = create<CartState>()(
         }
         set({ items: get().items.map((i) => (i.lineId === lineId ? { ...i, quantity } : i)) });
       },
+      setPot: (lineId, pot) =>
+        set({ items: get().items.map((i) => (i.lineId === lineId ? { ...i, pot } : i)) }),
       clearCart: () => set({ items: [] }),
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),

@@ -6,12 +6,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import Logo from "./Logo";
 import { useCartStore, useCartCount } from "@/store/cart";
 import { useFlyToCartStore } from "@/store/flyToCart";
+import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/shop", label: "Shop Plants" },
-  { href: "/shop?type=pots", label: "Pots & Decor" },
-  { href: "/shop?type=figurines", label: "Figurines" },
+  ...PRODUCT_CATEGORIES.map((c) => ({ href: `/shop?type=${c.id}`, label: c.label })),
   { href: "/contact", label: "Contact" },
 ];
 
@@ -104,28 +103,23 @@ export default function Navbar() {
           onClick={() => setMenuOpen((v) => !v)}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <motion.line
-              x1="3"
-              x2="21"
-              animate={menuOpen ? { y1: 12, y2: 12, rotate: 45 } : { y1: 6, y2: 6, rotate: 0 }}
+            <motion.g
+              animate={{ opacity: menuOpen ? 0 : 1, scale: menuOpen ? 0.7 : 1 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
               style={{ originX: "50%", originY: "50%" }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            />
-            <motion.line
-              x1="3"
-              y1="12"
-              x2="21"
-              y2="12"
-              animate={{ opacity: menuOpen ? 0 : 1 }}
-              transition={{ duration: 0.15 }}
-            />
-            <motion.line
-              x1="3"
-              x2="21"
-              animate={menuOpen ? { y1: 12, y2: 12, rotate: -45 } : { y1: 18, y2: 18, rotate: 0 }}
+            >
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </motion.g>
+            <motion.g
+              animate={{ opacity: menuOpen ? 1 : 0, scale: menuOpen ? 1 : 0.7 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
               style={{ originX: "50%", originY: "50%" }}
-              transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            />
+            >
+              <line x1="5" y1="5" x2="19" y2="19" />
+              <line x1="19" y1="5" x2="5" y2="19" />
+            </motion.g>
           </svg>
         </button>
       </div>

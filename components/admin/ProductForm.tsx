@@ -7,7 +7,8 @@ import AdminError from "@/components/admin/AdminError";
 import { createProduct, updateProduct, deleteProduct } from "@/lib/products";
 import { discountPercent } from "@/lib/pricing";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
-import type { PotColorOption, Product, ProductVariant } from "@/types";
+import { slugify } from "@/lib/slugify";
+import type { Product, ProductVariant } from "@/types";
 
 type FormState = Omit<Product, "id">;
 
@@ -23,7 +24,6 @@ function emptyProduct(): FormState {
     inStock: true,
     variants: [],
     allowsPotAddon: false,
-    potColorOptions: [],
     onSale: false,
     salePrice: undefined,
     promoLabel: "",
@@ -35,6 +35,7 @@ export default function ProductForm({ product }: { product?: Product }) {
   const [form, setForm] = useState<FormState>(product ?? emptyProduct());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [slugTouched, setSlugTouched] = useState(Boolean(product));
 
   function updateVariant(index: number, patch: Partial<ProductVariant>) {
     setForm({
@@ -57,37 +58,19 @@ export default function ProductForm({ product }: { product?: Product }) {
     setForm({ ...form, variants: form.variants.filter((_, i) => i !== index) });
   }
 
-  function updatePotColor(index: number, patch: Partial<PotColorOption>) {
-    setForm({
-      ...form,
-      potColorOptions: (form.potColorOptions ?? []).map((c, i) => (i === index ? { ...c, ...patch } : c)),
-    });
-  }
-
-  function addPotColor() {
-    setForm({
-      ...form,
-      potColorOptions: [...(form.potColorOptions ?? []), { name: "", hex: "#111111", priceDelta: 0 }],
-    });
-  }
-
-  function removePotColor(index: number) {
-    setForm({
-      ...form,
-      potColorOptions: (form.potColorOptions ?? []).filter((_, i) => i !== index),
-    });
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
     try {
+      const cleanSlug = slugify(form.slug) || slugify(form.name);
+      const payload = { ...form, slug: cleanSlug };
       if (product) {
-        await updateProduct(product.id, form);
+        await updateProduct(product.id, payload);
       } else {
-        await createProduct(form);
+        await createProduct(payload);
       }
+      setForm(payload);
       router.push("/admin/products");
       router.refresh();
     } catch {
@@ -117,7 +100,14 @@ export default function ProductForm({ product }: { product?: Product }) {
             <input
               required
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => {
+                const name = e.target.value;
+                setForm((f) => ({
+                  ...f,
+                  name,
+                  slug: slugTouched ? f.slug : slugify(name),
+                }));
+              }}
               className="w-full px-3 py-2.5 rounded-xl border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
             />
           </div>
@@ -126,7 +116,11 @@ export default function ProductForm({ product }: { product?: Product }) {
             <input
               required
               value={form.slug}
-              onChange={(e) => setForm({ ...form, slug: e.target.value })}
+              onChange={(e) => {
+                setSlugTouched(true);
+                setForm({ ...form, slug: e.target.value });
+              }}
+              onBlur={(e) => setForm((f) => ({ ...f, slug: slugify(e.target.value) }))}
               className="w-full px-3 py-2.5 rounded-xl border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
             />
           </div>
@@ -209,47 +203,11 @@ export default function ProductForm({ product }: { product?: Product }) {
         </div>
 
         {form.category === "flowers" && form.allowsPotAddon && (
-          <div className="pt-3 border-t border-line">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-xs font-bold text-sub">Pot Colour Options</h4>
-              <button type="button" onClick={addPotColor} className="text-xs text-lime">
-                + Add colour
-              </button>
-            </div>
-            <div className="space-y-2">
-              {(form.potColorOptions ?? []).map((c, i) => (
-                <div key={i} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
-                  <input
-                    placeholder="Colour name (e.g. Black)"
-                    value={c.name}
-                    onChange={(e) => updatePotColor(i, { name: e.target.value })}
-                    className="px-3 py-2 rounded-lg border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
-                  />
-                  <input
-                    type="color"
-                    value={c.hex}
-                    onChange={(e) => updatePotColor(i, { hex: e.target.value })}
-                    className="w-10 h-9 rounded-lg border border-glass-border bg-transparent"
-                  />
-                  <input
-                    type="number"
-                    placeholder="+price"
-                    value={c.priceDelta}
-                    onChange={(e) => updatePotColor(i, { priceDelta: Number(e.target.value) })}
-                    className="w-24 px-3 py-2 rounded-lg border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
-                  />
-                  <button type="button" onClick={() => removePotColor(i)} className="text-clay text-xs">
-                    Remove
-                  </button>
-                </div>
-              ))}
-              {(form.potColorOptions ?? []).length === 0 && (
-                <p className="text-xs text-sub">
-                  No colours yet — add one (e.g. Black, White) so shoppers can choose a pot colour.
-                </p>
-              )}
-            </div>
-          </div>
+          <p className="text-xs text-sub pt-3 border-t border-line">
+            Shoppers will be able to add any product from the <strong>Pots</strong> category
+            alongside this one, at that pot&apos;s own price — add pot products under the Pots
+            category to make them available here.
+          </p>
         )}
       </div>
 

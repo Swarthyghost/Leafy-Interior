@@ -43,7 +43,7 @@ export default function ConfirmPage() {
                 {item.name} <span className="text-sub font-normal">x{item.quantity}</span>
               </p>
               {item.variant && <p className="text-xs text-sub">{item.variant.label}</p>}
-              {item.pot && <p className="text-xs text-sub">+ Pot ({item.pot.colorName})</p>}
+              {item.pot && <p className="text-xs text-sub">+ Pot: {item.pot.name}</p>}
             </div>
             <span className="text-sm font-bold shrink-0">{formatGHS(lineItemTotal(item))}</span>
           </div>
