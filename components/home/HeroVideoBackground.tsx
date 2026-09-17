@@ -23,7 +23,7 @@ export default function HeroVideoBackground() {
       preload="auto"
       className="absolute inset-0 w-full h-full object-cover"
     >
-      <source src="/vid.mp4" type="video/mp4" />
+      <source src="/7292469-uhd_2160_3840_24fps.mp4" type="video/mp4" />
     </video>
   );
 }
