@@ -69,7 +69,7 @@ export default function ProductDetail({ product, pots }: { product: Product; pot
           )}
         </div>
         {product.images.length > 1 && (
-          <div className="flex gap-3">
+          <div className="flex gap-3 mb-5">
             {product.images.map((img, i) => (
               <button
                 key={img}
@@ -83,6 +83,24 @@ export default function ProductDetail({ product, pots }: { product: Product; pot
             ))}
           </div>
         )}
+
+        <div className="flex items-center justify-between gap-4 pt-4 border-t border-line">
+          <div className="flex items-baseline gap-2.5">
+            <span className="text-xl font-extrabold">{formatGHS(unitPrice)}</span>
+            {productOnSale && (
+              <span className="text-sm text-sub line-through">
+                {formatGHS(product.basePrice + (variant?.priceDelta ?? 0) + potTotal)}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={handleAddToCart}
+            disabled={!product.inStock}
+            className="px-7 py-3.5 rounded-full bg-text text-bg font-bold text-sm hover:bg-lime transition-colors disabled:opacity-40 shrink-0"
+          >
+            {!product.inStock ? "Sold Out" : added ? "Added!" : "Add to Cart"}
+          </button>
+        </div>
       </motion.div>
 
       <motion.div
