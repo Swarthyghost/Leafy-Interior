@@ -23,7 +23,7 @@ export default function ConfirmPage() {
 
   if (!customer || items.length === 0) return null;
 
-  const whatsappLink = buildWhatsAppLink(items, customer);
+  const whatsappLink = buildWhatsAppLink(items, customer, window.location.origin);
 
   return (
     <section className="max-w-[700px] mx-auto w-full px-6 md:px-10 py-14">

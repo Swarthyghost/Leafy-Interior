@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/admin/ImageUploader";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 import AdminError from "@/components/admin/AdminError";
 import { createProduct, updateProduct, deleteProduct } from "@/lib/products";
 import { discountPercent } from "@/lib/pricing";
@@ -24,6 +25,7 @@ function emptyProduct(): FormState {
     inStock: true,
     variants: [],
     allowsPotAddon: false,
+    topSelling: false,
     onSale: false,
     salePrice: undefined,
     promoLabel: "",
@@ -63,8 +65,9 @@ export default function ProductForm({ product }: { product?: Product }) {
     setSaving(true);
     setError(null);
     try {
-      const cleanSlug = slugify(form.slug) || slugify(form.name);
-      const payload = { ...form, slug: cleanSlug };
+      const cleanName = form.name.trim();
+      const cleanSlug = slugify(form.slug) || slugify(cleanName);
+      const payload = { ...form, name: cleanName, slug: cleanSlug };
       if (product) {
         await updateProduct(product.id, payload);
       } else {
@@ -128,11 +131,9 @@ export default function ProductForm({ product }: { product?: Product }) {
 
         <div>
           <label className="block text-xs text-sub mb-1.5">Description</label>
-          <textarea
+          <RichTextEditor
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={3}
-            className="w-full px-3 py-2.5 rounded-xl border border-glass-border bg-transparent text-sm outline-none focus:border-lime resize-none"
+            onChange={(description) => setForm((f) => ({ ...f, description }))}
           />
         </div>
 
@@ -188,6 +189,15 @@ export default function ProductForm({ product }: { product?: Product }) {
               className="w-4 h-4 accent-lime"
             />
             In Stock
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.topSelling ?? false}
+              onChange={(e) => setForm({ ...form, topSelling: e.target.checked })}
+              className="w-4 h-4 accent-lime"
+            />
+            Show in Top Selling
           </label>
           {form.category === "flowers" && (
             <label className="flex items-center gap-2 text-sm cursor-pointer">

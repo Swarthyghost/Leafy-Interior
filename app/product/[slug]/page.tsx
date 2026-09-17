@@ -2,6 +2,7 @@ import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
 import ProductDetail from "@/components/product/ProductDetail";
 import { getProductBySlug, getProductsByCategory } from "@/lib/products";
+import { stripHtml } from "@/lib/richText";
 
 export async function generateMetadata(
   { params }: PageProps<"/product/[slug]">,
@@ -17,13 +18,14 @@ export async function generateMetadata(
   }
 
   const previousImages = (await parent).openGraph?.images || [];
+  const plainDescription = stripHtml(product.description).slice(0, 160);
 
   return {
     title: `${product.name} | Leafy Interior Ghana`,
-    description: product.description.slice(0, 160),
+    description: plainDescription,
     openGraph: {
       title: product.name,
-      description: product.description.slice(0, 160),
+      description: plainDescription,
       url: `https://leafyinteriorghana.com/product/${slug}`,
       images: [
         {

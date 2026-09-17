@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
 import Logo from "./Logo";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 
@@ -19,9 +16,6 @@ const INFO_LINKS = [
 ];
 
 export default function Footer() {
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-
   return (
     <footer id="contact" className="border-t border-line pt-14 pb-6">
       <div className="max-w-[1200px] mx-auto w-full px-6 md:px-10">
@@ -53,7 +47,7 @@ export default function Footer() {
 
           <div>
             <h4 className="text-[13px] font-bold mb-3.5">More Info</h4>
-            <ul className="space-y-2 mb-4">
+            <ul className="space-y-2">
               {INFO_LINKS.map((l) => (
                 <li key={l.label} className="text-[13.5px] text-sub">
                   <Link href={l.href} className="hover:text-text">
@@ -62,28 +56,6 @@ export default function Footer() {
                 </li>
               ))}
             </ul>
-            <form
-              className="flex"
-              onSubmit={(e) => {
-                e.preventDefault();
-                setSubscribed(true);
-              }}
-            >
-              <input
-                type="email"
-                required
-                placeholder="Enter email..."
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 min-w-0 px-4 py-3 rounded-l-full border border-glass-border bg-transparent text-text text-sm outline-none"
-              />
-              <button
-                type="submit"
-                className="px-5 py-3 rounded-r-full bg-lime text-bg font-bold text-[13px] shrink-0"
-              >
-                {subscribed ? "Thanks!" : "Subscribe"}
-              </button>
-            </form>
           </div>
         </div>
 

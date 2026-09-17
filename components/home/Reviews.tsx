@@ -20,7 +20,7 @@ const REVIEWS = [
 
 export default function Reviews() {
   return (
-    <section className="pb-20 md:pb-[90px]">
+    <section className="pt-20 pb-20 md:pt-[90px] md:pb-[90px]">
       <div className="max-w-[1200px] mx-auto w-full px-6 md:px-10">
         <FadeIn className="section-title text-center mb-12">
           <h2 className="text-[30px] font-extrabold">Customer Review</h2>

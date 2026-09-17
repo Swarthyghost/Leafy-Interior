@@ -23,12 +23,6 @@ export default function Hero({ spotlightProduct }: { spotlightProduct: Product |
             <Link href="/shop" className="bg-text text-bg px-[26px] py-3.5 rounded-full font-bold text-sm">
               Explore
             </Link>
-            <a href="#trendy" className="flex items-center gap-2.5 text-sm font-semibold">
-              <span className="w-[34px] h-[34px] rounded-full border border-glass-border flex items-center justify-center">
-                ▶
-              </span>
-              See it styled
-            </a>
           </div>
 
           {spotlightProduct && (

@@ -13,7 +13,7 @@ export function cartSubtotal(items: CartLineItem[]): number {
   return items.reduce((sum, item) => sum + lineItemTotal(item), 0);
 }
 
-export function buildWhatsAppMessage(items: CartLineItem[], customer: CustomerInfo): string {
+export function buildWhatsAppMessage(items: CartLineItem[], customer: CustomerInfo, baseUrl?: string): string {
   const lines: string[] = [];
   lines.push("Hello Leafy Interior, I'd like to place an order:");
   lines.push("");
@@ -23,6 +23,9 @@ export function buildWhatsAppMessage(items: CartLineItem[], customer: CustomerIn
     if (item.variant) line += ` (${item.variant.label})`;
     line += ` x${item.quantity} - ${formatGHS(lineItemTotal(item))}`;
     lines.push(line);
+    if (baseUrl && item.slug) {
+      lines.push(`   ${baseUrl}/product/${item.slug}`);
+    }
     if (item.pot) {
       lines.push(`   + Pot: ${item.pot.name}`);
     }
@@ -39,7 +42,7 @@ export function buildWhatsAppMessage(items: CartLineItem[], customer: CustomerIn
   return lines.join("\n");
 }
 
-export function buildWhatsAppLink(items: CartLineItem[], customer: CustomerInfo): string {
-  const message = buildWhatsAppMessage(items, customer);
+export function buildWhatsAppLink(items: CartLineItem[], customer: CustomerInfo, baseUrl?: string): string {
+  const message = buildWhatsAppMessage(items, customer, baseUrl);
   return `https://wa.me/${STORE_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }

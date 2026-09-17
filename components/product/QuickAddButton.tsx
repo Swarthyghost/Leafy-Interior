@@ -15,6 +15,7 @@ export default function QuickAddButton({ product }: { product: Product }) {
     addItem({
       productId: product.id,
       name: product.name,
+      slug: product.slug,
       image: product.images[0] ?? "",
       basePrice: effectivePrice(product),
       quantity: 1,

@@ -31,6 +31,7 @@ export default function ProductDetail({ product, pots }: { product: Product; pot
     addItem({
       productId: product.id,
       name: product.name,
+      slug: product.slug,
       image: product.images[activeImage] ?? product.images[0] ?? "",
       basePrice: effectivePrice(product),
       quantity,
@@ -104,7 +105,10 @@ export default function ProductDetail({ product, pots }: { product: Product; pot
           </div>
         )}
         <h1 className="text-3xl font-extrabold mb-3">{product.name}</h1>
-        <p className="text-sub text-sm mb-5 leading-relaxed">{product.description}</p>
+        <div
+          className="text-sub text-sm mb-5 leading-relaxed [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline"
+          dangerouslySetInnerHTML={{ __html: product.description }}
+        />
         <div className="flex items-baseline gap-3 mb-6">
           <span className="text-2xl font-extrabold">{formatGHS(unitPrice)}</span>
           {productOnSale && (

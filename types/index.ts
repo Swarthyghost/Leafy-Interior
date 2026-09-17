@@ -19,6 +19,8 @@ export interface Product {
   inStock: boolean;
   variants: ProductVariant[];
   allowsPotAddon: boolean;
+  /** Shown in the home page's "Our Top Selling" section when checked in admin. */
+  topSelling?: boolean;
   onSale?: boolean;
   salePrice?: number;
   promoLabel?: string;
@@ -36,6 +38,8 @@ export interface CartLineItem {
   lineId: string;
   productId: string;
   name: string;
+  /** Used to link back to the product's page from the WhatsApp order message. */
+  slug: string;
   image: string;
   basePrice: number;
   quantity: number;

@@ -77,6 +77,9 @@ export default function AdminProductsPage() {
                   <span className="px-2 py-1 rounded-full border border-lime text-lime">{p.promoLabel}</span>
                 )}
                 {p.featured && <span className="px-2 py-1 rounded-full bg-lime/20 text-lime">Featured</span>}
+                {p.topSelling && (
+                  <span className="px-2 py-1 rounded-full bg-lime/20 text-lime">Top Selling</span>
+                )}
                 {!p.inStock && <span className="px-2 py-1 rounded-full bg-clay/20 text-clay">Sold out</span>}
               </div>
             </Link>
