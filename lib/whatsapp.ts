@@ -15,29 +15,31 @@ export function cartSubtotal(items: CartLineItem[]): number {
 
 export function buildWhatsAppMessage(items: CartLineItem[], customer: CustomerInfo, baseUrl?: string): string {
   const lines: string[] = [];
-  lines.push("Hello Leafy Interior, I'd like to place an order:");
+  lines.push("Hello Leafy Interior, I would like to place an order.");
   lines.push("");
+  lines.push("Customer Details:");
+  lines.push(`Name: ${customer.name}`);
+  lines.push(`Phone: ${customer.phone}`);
+  lines.push(`Address: ${customer.address}`);
+  if (customer.landmark) lines.push(`Nearest Landmark: ${customer.landmark}`);
+  lines.push("");
+  lines.push("Order Summary:");
 
   items.forEach((item, i) => {
-    let line = `${i + 1}. ${item.name}`;
-    if (item.variant) line += ` (${item.variant.label})`;
-    line += ` x${item.quantity} - ${formatGHS(lineItemTotal(item))}`;
-    lines.push(line);
-    if (baseUrl && item.slug) {
-      lines.push(`   ${baseUrl}/product/${item.slug}`);
-    }
-    if (item.pot) {
-      lines.push(`   + Pot: ${item.pot.name}`);
-    }
+    if (i > 0) lines.push("");
+    let title = `${i + 1}. ${item.name}`;
+    if (item.variant) title += ` (${item.variant.label})`;
+    title += ` (x${item.quantity})`;
+    lines.push(title);
+    lines.push(`Price: ${formatGHS(lineItemTotal(item))}`);
+    if (item.pot) lines.push(`+ Pot: ${item.pot.name}`);
+    if (baseUrl && item.slug) lines.push(`View Product: ${baseUrl}/product/${item.slug}`);
   });
 
   lines.push("");
   lines.push(`Subtotal: ${formatGHS(cartSubtotal(items))}`);
   lines.push("");
-  lines.push(`Name: ${customer.name}`);
-  lines.push(`Phone: ${customer.phone}`);
-  lines.push(`Address: ${customer.address}`);
-  if (customer.landmark) lines.push(`Nearest Landmark: ${customer.landmark}`);
+  lines.push("Please confirm my order. Thank you!");
 
   return lines.join("\n");
 }
