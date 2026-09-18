@@ -9,7 +9,7 @@ import { createProduct, updateProduct, deleteProduct } from "@/lib/products";
 import { discountPercent } from "@/lib/pricing";
 import { PRODUCT_CATEGORIES } from "@/lib/categories";
 import { slugify } from "@/lib/slugify";
-import type { Product, ProductVariant } from "@/types";
+import type { Product } from "@/types";
 
 type FormState = Omit<Product, "id">;
 
@@ -38,27 +38,6 @@ export default function ProductForm({ product }: { product?: Product }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slugTouched, setSlugTouched] = useState(Boolean(product));
-
-  function updateVariant(index: number, patch: Partial<ProductVariant>) {
-    setForm({
-      ...form,
-      variants: form.variants.map((v, i) => (i === index ? { ...v, ...patch } : v)),
-    });
-  }
-
-  function addVariant() {
-    setForm({
-      ...form,
-      variants: [
-        ...form.variants,
-        { id: `v-${Date.now()}`, label: "", priceDelta: 0, stock: 0 },
-      ],
-    });
-  }
-
-  function removeVariant(index: number) {
-    setForm({ ...form, variants: form.variants.filter((_, i) => i !== index) });
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -159,8 +138,8 @@ export default function ProductForm({ product }: { product?: Product }) {
               type="number"
               min={0}
               step={0.01}
-              value={form.basePrice}
-              onChange={(e) => setForm({ ...form, basePrice: Number(e.target.value) })}
+              value={form.basePrice === 0 ? "" : form.basePrice}
+              onChange={(e) => setForm({ ...form, basePrice: e.target.value === "" ? 0 : Number(e.target.value) })}
               className="w-full px-3 py-2.5 rounded-xl border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
             />
           </div>
@@ -219,45 +198,6 @@ export default function ProductForm({ product }: { product?: Product }) {
             category to make them available here.
           </p>
         )}
-      </div>
-
-      <div className="glass p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold">Variants</h3>
-          <button type="button" onClick={addVariant} className="text-xs text-lime">
-            + Add variant
-          </button>
-        </div>
-        <div className="space-y-2">
-          {form.variants.map((v, i) => (
-            <div key={v.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-2 items-center">
-              <input
-                placeholder="Label (e.g. Large / Terracotta)"
-                value={v.label}
-                onChange={(e) => updateVariant(i, { label: e.target.value })}
-                className="px-3 py-2 rounded-lg border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
-              />
-              <input
-                type="number"
-                placeholder="+/- price"
-                value={v.priceDelta}
-                onChange={(e) => updateVariant(i, { priceDelta: Number(e.target.value) })}
-                className="w-24 px-3 py-2 rounded-lg border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
-              />
-              <input
-                type="number"
-                placeholder="Stock"
-                value={v.stock}
-                onChange={(e) => updateVariant(i, { stock: Number(e.target.value) })}
-                className="w-20 px-3 py-2 rounded-lg border border-glass-border bg-transparent text-sm outline-none focus:border-lime"
-              />
-              <button type="button" onClick={() => removeVariant(i)} className="text-clay text-xs">
-                Remove
-              </button>
-            </div>
-          ))}
-          {form.variants.length === 0 && <p className="text-xs text-sub">No variants — base price applies.</p>}
-        </div>
       </div>
 
       <div className="glass p-5 space-y-3">
